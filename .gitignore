@@ -1,0 +1,8 @@
+/dist/
+/history-work/
+__pycache__/
+*.pyc
+*.zip
+*.bak
+.DS_Store
+Thumbs.db
