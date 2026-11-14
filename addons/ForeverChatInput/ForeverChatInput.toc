@@ -3,7 +3,7 @@
 ## Title: ForeverChatInput
 ## Notes: Position the native chat input separately from the chat window.
 ## Notes-zhCN: 单独移动聊天输入框。输入 /fci 调整位置。
-## Version: 1.1.2
+## Version: 1.1.3
 ## OptionalDeps: EllesmereUI, EllesmereUIChat
 ## SavedVariablesPerCharacter: ForeverChatInputDB
 

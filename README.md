@@ -4,7 +4,7 @@
 
 | 插件 | 用途 | 下载与记录 |
 | --- | --- | --- |
-| **ForeverChatInput** | 单独移动聊天输入框，支持 EllesmereUI 解锁模式 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverChatInput-v1.1.2/ForeverChatInput.zip) · [源码](addons/ForeverChatInput) |
+| **ForeverChatInput** | 单独移动聊天输入框，支持 EllesmereUI 解锁模式 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverChatInput-v1.1.3/ForeverChatInput.zip) · [源码](addons/ForeverChatInput) |
 | **ForeverChatTab** | 聊天输入时用 Tab 和 Shift+Tab 轮换自选发言频道 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverChatTab-v1.2.1/ForeverChatTab.zip) · [源码](addons/ForeverChatTab) |
 | **WIM_EllesmereUI** | 为 WIM 私聊窗口添加 EllesmereUI 风格皮肤 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/latest/download/WIM_EllesmereUI.zip) · [源码](addons/WIM_EllesmereUI) |
 | **TotemTimers 20.13** | 修复图腾图标和实际左键施法不一致等问题 | [本项目修改记录](CHANGELOG.md#totemtimers-2013) · [作者原版](https://www.curseforge.com/wow/addons/totemtimers/files/9593963) |

@@ -249,7 +249,6 @@ local function Restore()
 end
 
 local function Refresh()
-    pending = false
     if preview:IsShown() then ns.StyleInput(preview, true) end
     local db = ForeverChatInputDB
     local box = ChatFrameUtil and ChatFrameUtil.GetActiveWindow and ChatFrameUtil.GetActiveWindow()
@@ -285,7 +284,10 @@ end
 local function QueueRefresh()
     if pending then return end
     pending = true
-    C_Timer.After(0, Refresh)
+    C_Timer.After(0, function()
+        pending = false
+        Refresh()
+    end)
 end
 
 local function Print(message)
@@ -486,8 +488,16 @@ events:SetScript("OnEvent", function(_, event, name)
     QueueRefresh()
 end)
 
--- Chat state callbacks stay out of Blizzard's input scripts. The actual
--- geometry changes run after the native activation or deactivation ends.
+-- OpenChat finishes the native focus and header updates before this hook.
+-- Settle the input and the original top strip in the same rendered frame.
+if ChatFrameUtil and type(ChatFrameUtil.OpenChat) == "function" then
+    hooksecurefunc(ChatFrameUtil, "OpenChat", Refresh)
+end
+if type(ChatFrame_OpenChat) == "function" then
+    hooksecurefunc("ChatFrame_OpenChat", Refresh)
+end
+
+-- Keep deferred refreshes for native focus changes and other chat paths.
 for _, event in ipairs({ "OnEditBoxShow", "OnEditBoxHide", "OnEditBoxFocusGained", "OnEditBoxFocusLost" }) do
     EventRegistry:RegisterCallback("ChatFrame." .. event, QueueRefresh, addon)
 end
