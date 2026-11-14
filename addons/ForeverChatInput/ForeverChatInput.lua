@@ -21,6 +21,7 @@ local languageButton, languageAlpha, languageMouse
 local preview
 local unlockFrame, unlockActive, unlockChange
 local hookedLayouts = {}
+local topStripLayout
 
 local function IsReadable(value)
     if canaccessvalue then return canaccessvalue(value) end
@@ -66,11 +67,15 @@ local function SetPoints(box, points)
     end
 end
 
-local function CanMove(box)
+local function CanReadAnchors(box)
     local forbidden = box:IsForbidden()
     if not IsReadable(forbidden) or forbidden then return false end
     local restricted = box.IsAnchoringRestricted and box:IsAnchoringRestricted()
-    if not IsReadable(restricted) or restricted then return false end
+    return IsReadable(restricted) and not restricted
+end
+
+local function CanMove(box)
+    if not CanReadAnchors(box) then return false end
     local protected = box:IsProtected()
     return IsReadable(protected) and not (protected and InCombatLockdown())
 end
@@ -165,6 +170,48 @@ local function MatchesPlacement(points)
     return true
 end
 
+local function IsInputUp(box, imStyle)
+    if not box or box == frame or not box:IsShown() then return false end
+    if not imStyle or box:HasFocus() then return true end
+    return box == ChatFrameUtil.GetActiveWindow() and not box:ShouldDeactivateChatOnEditFocusLost()
+end
+
+local function NeedsOriginalTopStrip(chatFrame)
+    if not frame or not CanReadAnchors(frame) then return true end
+    local count = frame:GetNumPoints()
+    if not IsNumber(count) or count == 0 then return true end
+    local _, relative = frame:GetPoint(1)
+    if not IsReadable(relative) or relative ~= anchor then return true end
+
+    local name = chatFrame:GetName()
+    local id = name and tonumber(name:match("^ChatFrame(%d+)$"))
+    if not id or id > 10 then return true end
+
+    local boxName = frame:GetName()
+    if not IsReadable(boxName) or not boxName then return true end
+    local ownBox = _G[name .. "EditBox"]
+    local owner = _G[boxName:match("^(ChatFrame%d+)EditBox$")]
+    local docked = chatFrame.isDocked and chatFrame:IsShown()
+    if ownBox ~= frame and not (docked and owner and owner.isDocked) then return true end
+
+    -- Another attached box can still occupy the top of the selected dock tab.
+    local imStyle = GetCVar("chatStyle") == "im"
+    if IsInputUp(ownBox, imStyle) then return true end
+    if docked then
+        for index = 1, 10 do
+            local other = _G["ChatFrame" .. index]
+            if other and other ~= chatFrame and other.isDocked
+                and IsInputUp(_G["ChatFrame" .. index .. "EditBox"], imStyle) then return true end
+        end
+    end
+    return false
+end
+
+local function RefreshTopStrips()
+    local layout = topStripLayout
+    if layout and layout.InputOnTop(layout.DB()) then layout.RefreshInputTopStrips() end
+end
+
 local function RestoreLanguageButton()
     if not languageButton then return end
     languageButton:SetAlpha(languageAlpha)
@@ -197,6 +244,7 @@ local function Restore()
     if not points then return false end
     if UsesOurAnchor(points) then SetPoints(frame, originalPoints) end
     frame, originalPoints = nil, nil
+    RefreshTopStrips()
     return true
 end
 
@@ -231,6 +279,7 @@ local function Refresh()
     ns.StyleInput(anchor)
     UpdateLanguageButton(box)
     anchor:Show()
+    RefreshTopStrips()
 end
 
 local function QueueRefresh()
@@ -391,6 +440,16 @@ local function HookEllesmereLayout()
     if not layout then return end
     if hookedLayouts[layout] or type(layout.ApplyInputPosition) ~= "function" then return end
     hookedLayouts[layout] = true
+    -- Share EllesmereUI's reservation decision with its layout and border
+    -- code. Leave the original option and the native edit box state alone.
+    local inputTopStripActive = layout.InputTopStripActive
+    if type(inputTopStripActive) == "function" and type(layout.RefreshInputTopStrips) == "function"
+        and type(layout.InputOnTop) == "function" and type(layout.DB) == "function" then
+        topStripLayout = layout
+        layout.InputTopStripActive = function(chatFrame)
+            return inputTopStripActive(chatFrame) and NeedsOriginalTopStrip(chatFrame)
+        end
+    end
     hooksecurefunc(layout, "ApplyInputPosition", function()
         if unlockFrame and not unlockActive then PlaceUnlockFrame() end
         if frame then QueueRefresh() end
