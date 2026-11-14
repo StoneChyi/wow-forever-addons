@@ -31,7 +31,7 @@ scrollDown.points = {{"BOTTOMRIGHT", "window", "BOTTOMRIGHT", -7, 39}}
 local skin = {
     title = title,
     author = "WIM EllesmereUI Skin",
-    version = "1.0.0",
+    version = "1.0.1",
     -- Explicitly opt out of WIM's metal chrome and its legacy-skin upgrade prompt.
     schema_version = false,
     message_window = {
@@ -150,25 +150,41 @@ local function createWindowArt(window)
 
     local box = widgets.msg_box
     local input = backdrop:CreateTexture(nil, "ARTWORK", nil, -2)
-    input:SetColorTexture(0.05, 0.065, 0.08)
-    input:SetPoint("TOPLEFT", box, "TOPLEFT", -5, 1)
-    input:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", 5, -1)
+    input:SetPoint("TOPLEFT", box, "TOPLEFT", -6, 2)
+    input:SetPoint("BOTTOMRIGHT", box, "BOTTOMRIGHT", 6, -2)
 
-    local inputLine = backdrop:CreateTexture(nil, "ARTWORK")
-    inputLine:SetPoint("BOTTOMLEFT", input, "BOTTOMLEFT")
-    inputLine:SetPoint("BOTTOMRIGHT", input, "BOTTOMRIGHT")
-    inputLine:SetHeight(1)
+    local inputEdges = {}
+    for _, side in ipairs({"TOP", "BOTTOM"}) do
+        local edge = backdrop:CreateTexture(nil, "ARTWORK")
+        edge:SetPoint(side .. "LEFT", input, side .. "LEFT")
+        edge:SetPoint(side .. "RIGHT", input, side .. "RIGHT")
+        edge:SetHeight(1)
+        inputEdges[#inputEdges + 1] = edge
+    end
+    for _, side in ipairs({"LEFT", "RIGHT"}) do
+        local edge = backdrop:CreateTexture(nil, "ARTWORK")
+        edge:SetPoint("TOP" .. side, input, "TOP" .. side, 0, -1)
+        edge:SetPoint("BOTTOM" .. side, input, "BOTTOM" .. side, 0, 1)
+        edge:SetWidth(1)
+        inputEdges[#inputEdges + 1] = edge
+    end
 
     local function refreshInput()
         local active = isSelected() and box:IsShown()
         input:SetShown(active)
-        inputLine:SetShown(active)
-        if active then
-            if box:HasFocus() then
-                local r, g, b = accent()
-                inputLine:SetColorTexture(r, g, b, 0.85)
-            else
-                inputLine:SetColorTexture(1, 1, 1, 0.12)
+        for _, edge in ipairs(inputEdges) do edge:SetShown(active) end
+        if not active then return end
+
+        if box:HasFocus() then
+            input:SetColorTexture(0.105, 0.15, 0.18)
+            local r, g, b = accent()
+            for _, edge in ipairs(inputEdges) do
+                edge:SetColorTexture(r, g, b, 0.80)
+            end
+        else
+            input:SetColorTexture(0.085, 0.115, 0.14)
+            for _, edge in ipairs(inputEdges) do
+                edge:SetColorTexture(0.29, 0.37, 0.41)
             end
         end
     end
