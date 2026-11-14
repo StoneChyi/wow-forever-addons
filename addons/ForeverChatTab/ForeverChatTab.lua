@@ -64,6 +64,31 @@ function ns.SetNumberedSelected(key, enabled)
     db.numbered[key] = enabled == true
 end
 
+function ns.GetChannelAlias(key)
+    local aliases = GetDB().channelAliases
+    local alias = type(aliases) == "table" and aliases[key]
+    if type(alias) == "string" and alias ~= "" then return alias end
+end
+
+function ns.SetChannelAlias(key, input)
+    if input:find("[%c|]") then return false, "短名不能包含控制字符或竖线。" end
+    local alias = input:match("^ *(.-) *$")
+    local _, length = alias:gsub("[^\128-\191]", "")
+    if length > 16 then return false, "短名最多 16 个字符。" end
+
+    local db = GetDB()
+    if type(db.channelAliases) ~= "table" then db.channelAliases = {} end
+    db.channelAliases[key] = alias ~= "" and alias or nil
+    return true, alias ~= "" and "已保存短名。" or "已恢复自动短名。"
+end
+
+function ns.GetNumberedChannelKey(name)
+    local info = C_ChatInfo.GetChannelInfoFromIdentifier(name)
+    local zoneID = info and tonumber(info.zoneChannelID)
+    if zoneID and zoneID > 0 then return "zone:" .. zoneID, zoneID end
+    return "name:" .. name:lower()
+end
+
 local function IsCommunityChannel(id)
     local _, _, _, isCommunity = GetChannelName(id)
     return isCommunity
@@ -75,14 +100,10 @@ local function ReadNumberedChannels(...)
         local id, name, disabled = select(index, ...)
         if type(id) == "number" and id > 0 and type(name) == "string"
             and not byID[id] and not IsCommunityChannel(id) then
-            local info = C_ChatInfo.GetChannelInfoFromIdentifier(name)
-            local zoneID = info and tonumber(info.zoneChannelID)
-            local key = "name:" .. name:lower()
-            if zoneID and zoneID > 0 then key = "zone:" .. zoneID end
             local channel = {
                 id = id,
                 name = name,
-                key = key,
+                key = ns.GetNumberedChannelKey(name),
                 available = not disabled and (not C_ChatInfo.IsChannelRegional(id)
                     or C_ChatInfo.IsRegionalServiceAvailable()),
             }
@@ -202,7 +223,9 @@ local function OnChatTab(editBox)
             editBox:SetChatType(chatType)
             editBox:UpdateHeader()
         end)
+        return
     end
+    ns.QueueChannelLabel(editBox, nextChannel)
 end
 
 -- The chat frame calls this extension point after handling autocomplete.
