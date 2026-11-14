@@ -1,0 +1,9 @@
+## Interface: 16001
+## Title: WIM |cff0cd29fEllesmereUI|r Skin
+## Notes: An EllesmereUI-style skin for WIM conversation windows.
+## Notes-zhCN: 为 WIM 会话窗口提供 EllesmereUI 风格的皮肤。
+## Version: 1.0.0
+## Dependencies: WIM, EllesmereUI
+## IconTexture: Interface\AddOns\EllesmereUI\media\eg-logo.tga
+
+Skin.lua
