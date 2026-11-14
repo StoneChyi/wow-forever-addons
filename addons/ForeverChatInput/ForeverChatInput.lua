@@ -1,4 +1,4 @@
-local addon = ...
+local addon, ns = ...
 
 local locale = GetLocale()
 local chinese = locale == "zhCN" or locale == "zhTW"
@@ -9,9 +9,13 @@ local label = {
     saved = chinese and "已保存。按回车查看输入框。" or "Position saved. Press Enter to open chat.",
     reset = chinese and "已恢复聊天输入框的原有位置。" or "Restored the original chat input position.",
     help = chinese and "/fci 调整位置，/fci reset 恢复原位。" or "/fci to position the input, /fci reset to restore it.",
+    mover = locale == "zhTW" and "聊天輸入框" or (chinese and "聊天输入框" or "Chat Input"),
+    inUnlock = chinese and "请先退出 EllesmereUI 的解锁模式。" or "Exit EllesmereUI Unlock Mode first.",
 }
 
 local frame, originalPoints, pending
+local preview
+local unlockFrame, unlockActive, unlockChange
 local hookedLayouts = {}
 
 local function IsReadable(value)
@@ -103,6 +107,22 @@ local function ReadScreenCenter(widget)
     if scale then return x * scale / screenWidth, y * scale / screenHeight end
 end
 
+local function GetPlacement()
+    local box = ChatFrame1EditBox
+    if not (IsPermanentBox(box) and CanMove(box)) then box = nil end
+    local width, height
+    if box then width, height = BoxSize(box) end
+
+    local x, y
+    local db = ForeverChatInputDB
+    if db and IsNumber(db.x) and IsNumber(db.y) then
+        x, y = db.x, db.y
+    elseif box then
+        x, y = ReadScreenCenter(box)
+    end
+    return x or 0.5, y or 0.5, width or 300, height or 23
+end
+
 local function NewBackdrop(strata)
     local widget = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     widget:SetFrameStrata(strata)
@@ -154,10 +174,11 @@ end
 
 local function Refresh()
     pending = false
+    if preview:IsShown() then ns.StyleInput(preview, true) end
     local db = ForeverChatInputDB
     local box = ChatFrameUtil and ChatFrameUtil.GetActiveWindow and ChatFrameUtil.GetActiveWindow()
     local visible = IsPermanentBox(box) and box:IsVisible()
-    if not (db and IsNumber(db.x) and IsNumber(db.y) and IsReadable(visible) and visible) then
+    if unlockActive or not (db and IsNumber(db.x) and IsNumber(db.y) and IsReadable(visible) and visible) then
         Restore()
         return
     end
@@ -179,6 +200,7 @@ local function Refresh()
     anchor:SetFrameStrata(IsReadable(strata) and strata or "LOW")
     anchor:SetFrameLevel(IsNumber(level) and math.max(0, level - 1) or 0)
     if not MatchesPlacement(points) then SetPoints(box, attachedPoints) end
+    ns.StyleInput(anchor)
     anchor:Show()
 end
 
@@ -192,7 +214,79 @@ local function Print(message)
     DEFAULT_CHAT_FRAME:AddMessage("|cffffd18aForeverChatInput|r " .. message)
 end
 
-local preview = NewBackdrop("DIALOG")
+local function PlaceUnlockFrame()
+    local x, y, width, height = GetPlacement()
+    unlockFrame:SetSize(width, height)
+    PlaceOnScreen(unlockFrame, x, y)
+end
+
+local function RegisterUnlockMover()
+    local eui = EllesmereUI
+    if unlockFrame or not (eui and eui.MakeUnlockElement and eui.RegisterUnlockElements
+        and eui.RegisterUnlockModeListener) then return end
+
+    -- The mover edits our proxy. Native input anchors stay outside Unlock Mode.
+    unlockFrame = CreateFrame("Frame", nil, UIParent)
+    unlockFrame:Hide()
+    PlaceUnlockFrame()
+    eui:RegisterUnlockElements({ eui.MakeUnlockElement({
+        key = addon,
+        label = label.mover,
+        group = "Chat",
+        order = 601,
+        getFrame = function() return unlockFrame end,
+        getSize = function() return unlockFrame:GetSize() end,
+        noResize = true,
+        ownsPosition = true,
+        noAnchorTarget = true,
+        noSizeMatchTarget = true,
+        noSpecLayout = true,
+        noInitHook = true,
+        isHidden = function() return eui._specialUnlockGroup ~= nil end,
+        loadPos = function()
+            if not unlockActive then PlaceUnlockFrame() end
+            local db = ForeverChatInputDB
+            if not (db and IsNumber(db.x) and IsNumber(db.y)) then return end
+            local w, h = UIParent:GetSize()
+            return { point = "CENTER", relPoint = "CENTER", x = (db.x - 0.5) * w, y = (db.y - 0.5) * h }
+        end,
+        savePos = function(_, point, relative, x, y)
+            if point ~= "CENTER" or relative ~= "CENTER" or not (IsNumber(x) and IsNumber(y)) then return end
+            local w, h = UIParent:GetSize()
+            x, y = 0.5 + x / w, 0.5 + y / h
+            if unlockActive then
+                unlockChange = { x = x, y = y }
+            else
+                SavePosition(x, y)
+                PlaceUnlockFrame()
+                QueueRefresh()
+            end
+        end,
+        clearPos = function()
+            if unlockActive then
+                unlockChange = {}
+            else
+                SavePosition(nil, nil)
+                PlaceUnlockFrame()
+                QueueRefresh()
+            end
+        end,
+        applyPos = PlaceUnlockFrame,
+    }) }, addon)
+    eui:RegisterUnlockModeListener(addon, function(active, action)
+        unlockActive = active
+        if active then
+            preview:Hide()
+        else
+            if action == "save" and unlockChange then SavePosition(unlockChange.x, unlockChange.y) end
+            unlockChange = nil
+            PlaceUnlockFrame()
+        end
+        QueueRefresh()
+    end)
+end
+
+preview = NewBackdrop("DIALOG")
 preview:SetMovable(true)
 preview:SetClampedToScreen(true)
 preview:EnableMouse(true)
@@ -221,6 +315,7 @@ AddPreviewButton(label.save, -45, function()
     local x, y = ReadScreenCenter(preview)
     if x then
         SavePosition(x, y)
+        if unlockFrame then PlaceUnlockFrame() end
         QueueRefresh()
         Print(label.saved)
     end
@@ -231,9 +326,14 @@ AddPreviewButton(label.cancel, 45, function() preview:Hide() end)
 SLASH_FOREVERCHATINPUT1 = "/fci"
 SlashCmdList.FOREVERCHATINPUT = function(input)
     local command = input:match("^%s*(.-)%s*$"):lower()
+    if unlockActive then
+        Print(label.inUnlock)
+        return
+    end
     if command == "reset" then
         preview:Hide()
         SavePosition(nil, nil)
+        if unlockFrame then PlaceUnlockFrame() end
         QueueRefresh()
         Print(label.reset)
     elseif command == "" or command == "move" then
@@ -241,18 +341,10 @@ SlashCmdList.FOREVERCHATINPUT = function(input)
             preview:Hide()
             return
         end
-        local db = ForeverChatInputDB
-        local box = ChatFrame1EditBox
-        if not (IsPermanentBox(box) and CanMove(box)) then box = nil end
-        local width = box and BoxSize(box)
-        preview:SetSize(math.max(width or 300, 220), 64)
-        local x, y
-        if IsNumber(db.x) and IsNumber(db.y) then
-            x, y = db.x, db.y
-        elseif box then
-            x, y = ReadScreenCenter(box)
-        end
-        PlaceOnScreen(preview, x or 0.5, y or 0.5)
+        local x, y, width = GetPlacement()
+        preview:SetSize(math.max(width, 220), 64)
+        PlaceOnScreen(preview, x, y)
+        ns.StyleInput(preview, true)
         preview:Show()
     else
         Print(label.help)
@@ -260,15 +352,22 @@ SlashCmdList.FOREVERCHATINPUT = function(input)
 end
 
 local function HookEllesmereLayout()
-    local modules = EllesmereUI and EllesmereUI._ModuleNS
-    local chat = modules and modules.EllesmereUIChat
+    local chat = ns.GetEllesmereChat()
     local layout = chat and chat.ECHAT
     if not layout then return end
     if hookedLayouts[layout] or type(layout.ApplyInputPosition) ~= "function" then return end
     hookedLayouts[layout] = true
     hooksecurefunc(layout, "ApplyInputPosition", function()
+        if unlockFrame and not unlockActive then PlaceUnlockFrame() end
         if frame then QueueRefresh() end
     end)
+    for _, method in ipairs({ "ApplyBackground", "ApplyBorders" }) do
+        if type(layout[method]) == "function" then
+            hooksecurefunc(layout, method, function()
+                if frame or preview:IsShown() then QueueRefresh() end
+            end)
+        end
+    end
 end
 
 local events = CreateFrame("Frame")
@@ -282,13 +381,15 @@ events:SetScript("OnEvent", function(_, event, name)
     if event == "ADDON_LOADED" then
         if name == addon then
             if type(ForeverChatInputDB) ~= "table" then ForeverChatInputDB = {} end
-        elseif name ~= "EllesmereUIChat" then
+        elseif name ~= "EllesmereUIChat" and name ~= "EllesmereUI" then
             return
         end
         HookEllesmereLayout()
     elseif event == "PLAYER_LOGIN" or event == "PLAYER_ENTERING_WORLD" then
         HookEllesmereLayout()
     end
+    RegisterUnlockMover()
+    if unlockFrame and not unlockActive then PlaceUnlockFrame() end
     QueueRefresh()
 end)
 

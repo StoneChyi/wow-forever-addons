@@ -4,7 +4,7 @@
 
 | 插件 | 用途 | 下载与记录 |
 | --- | --- | --- |
-| **ForeverChatInput** | 为按回车打开的聊天输入框单独设置屏幕位置 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverChatInput-v1.0.0/ForeverChatInput.zip) · [源码](addons/ForeverChatInput) |
+| **ForeverChatInput** | 单独移动聊天输入框，支持 EllesmereUI 解锁模式 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverChatInput-v1.1.0/ForeverChatInput.zip) · [源码](addons/ForeverChatInput) |
 | **ForeverChatTab** | 聊天输入时用 Tab 和 Shift+Tab 轮换自选发言频道 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverChatTab-v1.1.0/ForeverChatTab.zip) · [源码](addons/ForeverChatTab) |
 | **WIM_EllesmereUI** | 为 WIM 私聊窗口添加 EllesmereUI 风格皮肤 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/latest/download/WIM_EllesmereUI.zip) · [源码](addons/WIM_EllesmereUI) |
 | **TotemTimers 20.13** | 修复图腾图标和实际左键施法不一致等问题 | [本项目修改记录](CHANGELOG.md#totemtimers-2013) · [作者原版](https://www.curseforge.com/wow/addons/totemtimers/files/9593963) |
@@ -16,9 +16,11 @@ TotemTimers 上游保留全部权利。两个图腾插件的自定义改动在�
 
 下载 ZIP 并解压到魔兽目录的 `_forever_/Interface/AddOns/`。确认结构为 `AddOns/ForeverChatInput/ForeverChatInput.toc`，并在游戏插件列表启用 **ForeverChatInput**。
 
-输入 `/fci` 打开预览，按住鼠标左键拖到目标位置，再点击「保存」。之后按回车会在新位置打开输入框，聊天窗口留在原位。位置按角色保存。点击「取消」或再次输入 `/fci` 可退出预览，输入 `/fci reset` 可恢复原来的位置。
+使用 EllesmereUI 时，脱战后输入 `/unlock` 进入「解锁模式」，拖动「聊天输入框」，然后点击「保存并退出」。之后按回车会在新位置打开输入框，聊天窗口留在原位。
 
-支持无限服原生聊天及 EllesmereUIChat 各样式，可与 ForeverChatTab 一起使用。普通聊天输入框在编辑时跟随设置的位置，临时弹出的密语窗口沿用自己的布局。
+也可以输入 `/fci` 打开独立预览，按住鼠标左键拖动后点击「保存」。点击「取消」或再次输入 `/fci` 可退出预览。两个入口共用同一份按角色保存的位置，输入 `/fci reset` 可恢复原位。
+
+启用 EllesmereUIChat 时，移出的输入框跟随聊天外观。EllesmereUI 样式采用聊天背景和边框设置，WoW Forever 样式使用铜色边框，暴雪和经典样式沿用原输入框的装饰。文字沿用原输入框的字体设置。插件也支持无限服原生聊天，可与 ForeverChatTab 一起使用。临时弹出的密语窗口沿用自己的布局。
 
 ## 安装 ForeverChatTab
 
