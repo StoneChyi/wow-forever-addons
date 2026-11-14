@@ -8,12 +8,16 @@ local label = {
     cancel = chinese and "取消" or "Cancel",
     saved = chinese and "已保存。按回车查看输入框。" or "Position saved. Press Enter to open chat.",
     reset = chinese and "已恢复聊天输入框的原有位置。" or "Restored the original chat input position.",
-    help = chinese and "/fci 调整位置，/fci reset 恢复原位。" or "/fci to position the input, /fci reset to restore it.",
+    help = chinese and "/fci 调整位置，/fci reset 恢复原位，/fci ime show 或 hide 设置输入法标记。"
+        or "/fci to move, /fci reset to restore, /fci ime show or hide to set the input language button.",
+    imeShown = chinese and "已显示移出输入框的输入法标记。" or "Showing the input language button.",
+    imeHidden = chinese and "已隐藏移出输入框的输入法标记。" or "Hiding the input language button.",
     mover = locale == "zhTW" and "聊天輸入框" or (chinese and "聊天输入框" or "Chat Input"),
     inUnlock = chinese and "请先退出 EllesmereUI 的解锁模式。" or "Exit EllesmereUI Unlock Mode first.",
 }
 
 local frame, originalPoints, pending
+local languageButton, languageAlpha, languageMouse
 local preview
 local unlockFrame, unlockActive, unlockChange
 local hookedLayouts = {}
@@ -161,8 +165,32 @@ local function MatchesPlacement(points)
     return true
 end
 
+local function RestoreLanguageButton()
+    if not languageButton then return end
+    languageButton:SetAlpha(languageAlpha)
+    languageButton:EnableMouse(languageMouse)
+    languageButton, languageAlpha, languageMouse = nil, nil, nil
+end
+
+local function UpdateLanguageButton(box)
+    -- Blizzard owns the button's show/hide, label and language switching.
+    -- Only suppress the button's drawing and mouse hit area while detached.
+    local button = _G[box:GetName() .. "Language"]
+    if not button or ForeverChatInputDB.hideInputLanguage == false then
+        RestoreLanguageButton()
+    elseif button ~= languageButton then
+        RestoreLanguageButton()
+        local alpha, mouse = button:GetAlpha(), button:IsMouseEnabled()
+        if not (IsNumber(alpha) and IsReadable(mouse)) then return end
+        languageButton, languageAlpha, languageMouse = button, alpha, mouse
+        button:SetAlpha(0)
+        button:EnableMouse(false)
+    end
+end
+
 local function Restore()
     anchor:Hide()
+    RestoreLanguageButton()
     if not frame then return true end
     if not CanMove(frame) then return false end
     local points = ReadPoints(frame)
@@ -201,6 +229,7 @@ local function Refresh()
     anchor:SetFrameLevel(IsNumber(level) and math.max(0, level - 1) or 0)
     if not MatchesPlacement(points) then SetPoints(box, attachedPoints) end
     ns.StyleInput(anchor)
+    UpdateLanguageButton(box)
     anchor:Show()
 end
 
@@ -336,6 +365,11 @@ SlashCmdList.FOREVERCHATINPUT = function(input)
         if unlockFrame then PlaceUnlockFrame() end
         QueueRefresh()
         Print(label.reset)
+    elseif command == "ime show" or command == "ime hide" then
+        local hide = command == "ime hide"
+        ForeverChatInputDB.hideInputLanguage = hide
+        QueueRefresh()
+        Print(hide and label.imeHidden or label.imeShown)
     elseif command == "" or command == "move" then
         if preview:IsShown() then
             preview:Hide()
