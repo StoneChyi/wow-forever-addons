@@ -1,6 +1,5 @@
 local _, ns = ...
 
-local pendingBox, pendingID, scheduled
 local currentLabel
 local hover = CreateFrame("Frame")
 hover:Hide()
@@ -138,19 +137,8 @@ local function ShortenHeader(editBox, id)
     ShowHover(editBox, id, label, fullText)
 end
 
-function ns.QueueChannelLabel(editBox, target)
+function ns.ApplyChannelLabel(editBox, target)
     currentLabel = nil
-    pendingBox, pendingID = nil, nil
-    if type(target) == "number" then pendingBox, pendingID = editBox, target end
-    if not pendingBox and not hover:IsShown() then return end
-    if scheduled then return end
-    scheduled = true
-    -- Keep visual changes outside the native chat input execution.
-    C_Timer.After(0, function()
-        scheduled = false
-        local box, id = pendingBox, pendingID
-        pendingBox, pendingID = nil, nil
-        hover:Hide()
-        if box then pcall(ShortenHeader, box, id) end
-    end)
+    hover:Hide()
+    if type(target) == "number" then pcall(ShortenHeader, editBox, target) end
 end

@@ -3,7 +3,7 @@
 ## Title: ForeverChatTab
 ## Notes: Cycle outgoing chat channels with Tab and Shift+Tab.
 ## Notes-zhCN: 聊天输入时按 Tab 正向切换发言频道，按 Shift+Tab 反向切换。
-## Version: 1.2.0
+## Version: 1.2.1
 ## SavedVariables: ForeverChatTabDB
 
 ForeverChatTab.lua

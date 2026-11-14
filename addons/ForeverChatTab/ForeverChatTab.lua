@@ -225,7 +225,8 @@ local function OnChatTab(editBox)
         end)
         return
     end
-    ns.QueueChannelLabel(editBox, nextChannel)
+    -- Finish the label in the same Tab callback so the full name cannot render first.
+    ns.ApplyChannelLabel(editBox, nextChannel)
 end
 
 -- The chat frame calls this extension point after handling autocomplete.
