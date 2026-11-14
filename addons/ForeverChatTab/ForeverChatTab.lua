@@ -239,7 +239,7 @@ channelEvents:SetScript("OnEvent", function()
     if next(pendingJoins) then ns.GetNumberedChannels() end
 end)
 
-SLASH_FOREVERCHATTAB1 = "/fct"
+SLASH_FOREVERCHATTAB1 = "/fchat"
 SlashCmdList.FOREVERCHATTAB = function(input)
     local command = input:match("^%s*(.-)%s*$"):lower()
     if command == "on" or command == "off" then
@@ -249,6 +249,6 @@ SlashCmdList.FOREVERCHATTAB = function(input)
     elseif command == "" then
         ns.OpenSettings()
     else
-        DEFAULT_CHAT_FRAME:AddMessage("ForeverChatTab：/fct 打开设置，/fct on 开启，/fct off 关闭。")
+        DEFAULT_CHAT_FRAME:AddMessage("ForeverChatTab：/fchat 打开设置，/fchat on 开启，/fchat off 关闭。")
     end
 end
