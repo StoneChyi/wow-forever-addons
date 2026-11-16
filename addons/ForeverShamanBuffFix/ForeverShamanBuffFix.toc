@@ -1,0 +1,10 @@
+## Interface: 16001
+## AllowLoadGameType: camelot
+## Title: ForeverShamanBuffFix
+## Title-zhCN: 无限服萨满增益修正
+## Notes: Restores Improved Stormstrike and Flurry in the EllesmereUI Cooldown Manager.
+## Notes-zhCN: 在 EllesmereUI 冷却管理器中恢复强化风暴打击和乱舞的追踪。
+## Version: 1.0.0
+## Dependencies: EllesmereUICooldownManager
+
+ForeverShamanBuffFix.lua

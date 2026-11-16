@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | **ForeverChatInput** | 单独移动聊天输入框，支持 EllesmereUI 解锁模式 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverChatInput-v1.1.3/ForeverChatInput.zip) · [源码](addons/ForeverChatInput) |
 | **ForeverChatTab** | 聊天输入时用 Tab 和 Shift+Tab 轮换自选发言频道 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverChatTab-v1.2.2/ForeverChatTab.zip) · [源码](addons/ForeverChatTab) |
+| **ForeverShamanBuffFix** | 为无限服萨满恢复 EllesmereUI 冷却管理器里的强化风暴打击和乱舞追踪 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/download/ForeverShamanBuffFix-v1.0.0/ForeverShamanBuffFix.zip) · [源码](addons/ForeverShamanBuffFix) |
 | **WIM_EllesmereUI** | 为 WIM 私聊窗口添加 EllesmereUI 风格皮肤 | [下载独立 ZIP](https://github.com/StoneChyi/wow-forever-addons/releases/latest/download/WIM_EllesmereUI.zip) · [源码](addons/WIM_EllesmereUI) |
 | **TotemTimers 20.13** | 修复图腾图标和实际左键施法不一致等问题 | [本项目修改记录](CHANGELOG.md#totemtimers-2013) · [作者原版](https://www.curseforge.com/wow/addons/totemtimers/files/9593963) |
 | **StoneTotemTimers** | 本地独立版，增加同系排序和三个召唤组合的预览 | [本项目修改记录](CHANGELOG.md#stonetotemtimers) |
@@ -35,6 +36,12 @@ TotemTimers 上游保留全部权利。两个图腾插件的自定义改动在�
 用 Tab 或 Shift+Tab 切到编号频道后，聊天输入框保留频道编号并显示短名，鼠标悬停可查看全名。打开 `/fchat`，点频道右侧的「短名」可输入最多 16 个字符，也可用「恢复自动」清除自定义短名。
 
 密语、社区频道和斜杠命令使用客户端原有的 Tab 行为。输入 `/fchat off` 暂停，`/fchat on` 恢复。
+
+## 安装 ForeverShamanBuffFix
+
+把 ZIP 解压到 `_forever_/Interface/AddOns/`。在角色插件列表启用 **无限服萨满增益修正** 和 **EllesmereUI Cooldown Manager**。进入萨满后，补丁会在启用的「冷却管理器 → CDM 条 → 增益」补回强化风暴打击 `1238931` 和乱舞 `16257`。已放在其他启用的 CDM 增益条上的自定义追踪会保留在原处。
+
+两项会在实际触发时显示。换包如果清空插件目录，需把补丁目录一并装回。想手动删除这两项时，先停用补丁再重载界面。
 
 ## 安装 WIM_EllesmereUI
 
